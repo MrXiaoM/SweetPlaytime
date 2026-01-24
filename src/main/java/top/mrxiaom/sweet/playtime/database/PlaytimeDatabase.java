@@ -86,6 +86,21 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
      * 获取玩家游玩时间 (秒)
      * @param playerUUID 玩家 UUID
      * @param tag 要求搜索标签
+     * @param startDate 要求起始时间
+     * @param endDate 要求结束时间
+     * @return 返回玩家游玩时间秒数，如果数据库调用异常，返回 <code>null</code>
+     */
+    @Nullable
+    public Long collectPlaytimeSeconds(UUID playerUUID, @Nullable String tag, @Nullable LocalDate startDate, @Nullable LocalDate endDate) {
+        LocalDateTime startTime = startDate == null ? null : startDate.atTime(0, 0);
+        LocalDateTime endTime = endDate == null ? null : endDate.atTime(0, 0);
+        return collectPlaytimeSeconds(playerUUID, tag, startTime, endTime);
+    }
+
+    /**
+     * 获取玩家游玩时间 (秒)
+     * @param playerUUID 玩家 UUID
+     * @param tag 要求搜索标签
      * @param startTime 要求起始时间
      * @param endTime 要求结束时间
      * @return 返回玩家游玩时间秒数，如果数据库调用异常，返回 <code>null</code>
