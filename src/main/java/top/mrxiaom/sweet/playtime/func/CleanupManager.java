@@ -34,11 +34,14 @@ public class CleanupManager extends AbstractModule {
             }
             this.keepTimeSeconds = keepTime;
             long period = checkPeriodSeconds * 20L;
-            task = plugin.getScheduler().runTaskTimerAsync(() -> {
-                LocalDateTime beforeThat = LocalDateTime.now().minusSeconds(keepTimeSeconds);
-                plugin.getPlaytimeDatabase().cleanup(beforeThat);
-            }, period, period);
+            task = plugin.getScheduler().runTaskTimerAsync(this::cleanup, period, period);
         }
+    }
+
+    public void cleanup() {
+        if (keepTimeSeconds == 0L) return;
+        LocalDateTime beforeThat = LocalDateTime.now().minusSeconds(keepTimeSeconds);
+        plugin.getPlaytimeDatabase().cleanup(beforeThat);
     }
 
     @Override
@@ -47,6 +50,10 @@ public class CleanupManager extends AbstractModule {
             task.cancel();
             task = null;
         }
+    }
+
+    public static CleanupManager inst() {
+        return instanceOf(CleanupManager.class);
     }
 
     private static Long parseSeconds(String str) {

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
 import top.mrxiaom.sweet.playtime.func.AbstractModule;
+import top.mrxiaom.sweet.playtime.func.CleanupManager;
 
 import java.util.*;
 
@@ -23,7 +24,19 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
-        if (args.length == 1 && "reload".equalsIgnoreCase(args[0]) && sender.isOp()) {
+        if (args.length == 1 && "cleanup".equalsIgnoreCase(args[0]) && sender.isOp()) {
+            plugin.getScheduler().runTaskAsync(() -> {
+                CleanupManager.inst().cleanup();
+                t(sender, "&a数据清理执行完成");
+            });
+            return true;
+        }
+        if (args.length > 0 && "reload".equalsIgnoreCase(args[0]) && sender.isOp()) {
+            if (args.length > 1 && "database".equalsIgnoreCase(args[1])) {
+                plugin.options.database().reloadConfig();
+                plugin.options.database().reconnect();
+                return t(sender, "&a已重载并重新连接到数据库");
+            }
             plugin.reloadConfig();
             return t(sender, "&a配置文件已重载");
         }
