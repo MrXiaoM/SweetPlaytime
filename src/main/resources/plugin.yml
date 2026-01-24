@@ -1,0 +1,13 @@
+name: SweetPlaytime
+version: '${version}'
+main: top.mrxiaom.sweet.playtime.SweetPlaytime
+api-version: 1.13
+depend: []
+softdepend: 
+  - PlaceholderAPI
+authors: [ MrXiaoM ]
+folia-supported: true
+commands:
+  sweetplaytime:
+    description: 'The main command of SweetPlaytime'
+    aliases: [ spt, playtime, pt ]
