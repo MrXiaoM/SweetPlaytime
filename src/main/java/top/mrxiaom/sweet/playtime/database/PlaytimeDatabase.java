@@ -6,6 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.database.IDatabase;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
@@ -24,6 +25,7 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
     private static final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private String TABLE_NAME;
     private final Map<UUID, Playtime> players = new HashMap<>();
+    private final Map<UUID, PlaytimeCacheCollection> cacheMap = new HashMap<>();
     private LocalDate lastDate = LocalDate.now();
     public PlaytimeDatabase(SweetPlaytime plugin) {
         super(plugin);
@@ -53,15 +55,21 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player player = e.getPlayer();
-        players.put(player.getUniqueId(), new Playtime(player));
+        UUID uuid = player.getUniqueId();
+        players.put(uuid, new Playtime(player));
+        cacheMap.remove(uuid);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        Playtime playtime = players.remove(e.getPlayer().getUniqueId());
+        UUID uuid = e.getPlayer().getUniqueId();
+        Playtime playtime = players.remove(uuid);
         if (playtime != null) {
             // TODO: 需要验证是否需要在 onDisable 时提交数据
-            plugin.getScheduler().runTaskAsync(() -> submit(playtime, LocalDateTime.now()));
+            plugin.getScheduler().runTaskAsync(() -> {
+                submit(playtime, LocalDateTime.now());
+                cacheMap.remove(uuid);
+            });
         }
     }
 
@@ -83,7 +91,39 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
     }
 
     /**
-     * 获取玩家游玩时间 (秒)
+     * 获取在线玩家的在线时间
+     * @param uuid 玩家 UUID
+     * @return 如果玩家不在线，则返回缺省值 <code>0</code>
+     */
+    public long getCurrentOnlineSeconds(UUID uuid) {
+        Playtime playtime = players.get(uuid);
+        if (playtime != null) {
+            return playtime.getPlayedSeconds(LocalDateTime.now());
+        }
+        return 0L;
+    }
+
+    /**
+     * @see PlaytimeDatabase#collectPlaytimeSeconds(UUID, String, LocalDate, LocalDate)
+     */
+    public Long collectPlaytimeWithCache(UUID playerUUID, @Nullable String tag, @Nullable LocalDate startDate, @Nullable LocalDate endDate) {
+        PlaytimeCacheCollection cache = getOrCreateCache(playerUUID);
+        Long exists = cache.getCache(tag, startDate, endDate);
+        if (exists != null) return exists;
+        return collectPlaytimeSeconds(playerUUID, tag, startDate, endDate);
+    }
+
+    @NotNull
+    private PlaytimeCacheCollection getOrCreateCache(UUID playerUUID) {
+        PlaytimeCacheCollection exists = cacheMap.get(playerUUID);
+        if (exists != null) return exists;
+        PlaytimeCacheCollection newOne = new PlaytimeCacheCollection(playerUUID);
+        cacheMap.put(playerUUID, newOne);
+        return newOne;
+    }
+
+    /**
+     * 获取数据库中保存的玩家游玩时间 (秒)
      * @param playerUUID 玩家 UUID
      * @param tag 要求搜索标签
      * @param startDate 要求起始时间
@@ -98,7 +138,7 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
     }
 
     /**
-     * 获取玩家游玩时间 (秒)
+     * 获取数据库中保存的玩家游玩时间 (秒)
      * @param playerUUID 玩家 UUID
      * @param tag 要求搜索标签
      * @param startTime 要求起始时间
@@ -143,11 +183,7 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
                     seconds += result.getLong("played_seconds");
                 }
             }
-            // 如果玩家在线，把玩家当前在线时间也加进去
-            Playtime playtime = players.get(playerUUID);
-            if (playtime != null) {
-                seconds += playtime.getPlayedSeconds();
-            }
+            getOrCreateCache(playerUUID).putCache(tag, startTime, endTime, seconds);
             return seconds;
         }
     }
