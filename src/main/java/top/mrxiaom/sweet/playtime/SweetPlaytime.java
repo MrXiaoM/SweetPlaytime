@@ -1,5 +1,6 @@
 package top.mrxiaom.sweet.playtime;
 
+import org.bukkit.configuration.file.FileConfiguration;
 import top.mrxiaom.pluginbase.BukkitPlugin;
 import top.mrxiaom.pluginbase.paper.PaperFactory;
 import top.mrxiaom.pluginbase.utils.inventory.InventoryFactory;
@@ -64,12 +65,21 @@ public class SweetPlaytime extends BukkitPlugin {
     public PlaytimeDatabase getPlaytimeDatabase() {
         return playtimeDatabase;
     }
+    private String tag = "default";
+    public String tag() {
+        return tag;
+    }
 
     @Override
     protected void beforeEnable() {
         options.registerDatabase(
                 this.playtimeDatabase = new PlaytimeDatabase(this)
         );
+    }
+
+    @Override
+    protected void beforeReloadConfig(FileConfiguration config) {
+        this.tag = config.getString("tag", "default");
     }
 
     @Override

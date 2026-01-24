@@ -72,6 +72,7 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
                 "CREATE TABLE if NOT EXISTS `" + TABLE_NAME + "`(" +
                         "`uuid` VARCHAR(48)," +
                         "`name` VARCHAR(48)," +
+                        "`tag` VARCHAR(48)," +
                         "`record_start_time` DATETIME," +
                         "`record_save_time` DATETIME," +
                         "`played_seconds` INT" +
@@ -84,35 +85,42 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
     /**
      * 获取玩家游玩时间 (秒)
      * @param playerUUID 玩家 UUID
+     * @param tag 要求搜索标签
      * @param startTime 要求起始时间
      * @param endTime 要求结束时间
      * @return 返回玩家游玩时间秒数，如果数据库调用异常，返回 <code>null</code>
      */
     @Nullable
-    public Long collectPlaytimeSeconds(UUID playerUUID, @Nullable LocalDateTime startTime, @Nullable LocalDateTime endTime) {
+    public Long collectPlaytimeSeconds(UUID playerUUID, @Nullable String tag, @Nullable LocalDateTime startTime, @Nullable LocalDateTime endTime) {
         try (Connection conn = plugin.getConnection()) {
-            return collectPlaytimeSeconds(conn, playerUUID, startTime, endTime);
+            return collectPlaytimeSeconds(conn, playerUUID, tag, startTime, endTime);
         } catch (SQLException e) {
             warn(e);
             return null;
         }
     }
 
-    public long collectPlaytimeSeconds(Connection conn, UUID playerUUID, @Nullable LocalDateTime startTime, @Nullable LocalDateTime endTime) throws SQLException {
+    public long collectPlaytimeSeconds(Connection conn, UUID playerUUID, @Nullable String tag, @Nullable LocalDateTime startTime, @Nullable LocalDateTime endTime) throws SQLException {
         List<String> conditions = new ArrayList<>();
         conditions.add("`uuid`=?");
+        if (tag != null) {
+            conditions.add("`tag`=?");
+        }
         if (startTime != null) {
             String value = startTime.format(timeFormat);
             conditions.add("`record_start_time` >= '" + value + "'");
         }
         if (endTime != null) {
             String value = endTime.format(timeFormat);
-            conditions.add("`record_start_time` <= '" + value + "'");
+            conditions.add("`record_start_time` < '" + value + "'");
         }
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM `" + TABLE_NAME + "` WHERE " + String.join(" AND ", conditions) + ";"
         )) {
             ps.setString(1, playerUUID.toString());
+            if (tag != null) {
+                ps.setString(2, tag);
+            }
             long seconds = 0L;
             // 收集数据库记录的在线时间
             try (ResultSet result = ps.executeQuery()) {
@@ -160,12 +168,13 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
         if (playedSeconds < 1) return;
         try (PreparedStatement ps = conn.prepareStatement(
                 "INSERT INTO `" + TABLE_NAME + "`" +
-                        "(`uuid`,`name`,`record_start_time`,`record_save_time`,`played_seconds`) " +
-                        "VALUES(?,?,'" + startTime + "','" + nowTime + "',?);"
+                        "(`uuid`,`name`,`tag`,`record_start_time`,`record_save_time`,`played_seconds`) " +
+                        "VALUES(?,?,?,'" + startTime + "','" + nowTime + "',?);"
         )) {
             ps.setString(1, playtime.getPlayer().getUniqueId().toString());
             ps.setString(2, playtime.getPlayer().getName());
-            ps.setLong(3, playedSeconds);
+            ps.setString(3, plugin.tag());
+            ps.setLong(4, playedSeconds);
             ps.executeUpdate();
         }
     }
