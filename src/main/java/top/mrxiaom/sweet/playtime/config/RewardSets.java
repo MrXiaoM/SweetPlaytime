@@ -74,6 +74,7 @@ public class RewardSets {
         Map<Player, List<Long>> durationMap = new HashMap<>();
         // 执行自动领取检查任务
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!hasPermission(player)) continue;
             List<Long> durationList = doAutoClaim(player);
             if (durationList != null && !durationList.isEmpty()) {
                 durationMap.put(player, durationList);
