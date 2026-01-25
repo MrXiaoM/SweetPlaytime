@@ -2,6 +2,7 @@ package top.mrxiaom.sweet.playtime.func;
 
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import top.mrxiaom.pluginbase.api.IRunTask;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
 import top.mrxiaom.pluginbase.utils.Util;
@@ -26,11 +27,15 @@ public class RewardManager extends AbstractModule {
             Util.mkdirs(folder);
             plugin.saveResource("rewards/example.yml", new File(folder, "example.yml"));
         }
+        for (RewardSets rewardSets : rewards.values()) {
+            rewardSets.cancelCheckPeriodTask();
+        }
         rewards.clear();
         Util.reloadFolder(folder, false, (id, file) -> {
             YamlConfiguration config = ConfigUtils.load(file);
             try {
-                rewards.put(id, new RewardSets(id, config));
+                RewardSets rewardSets = new RewardSets(plugin, id, config);
+                rewards.put(id, rewardSets);
             } catch (Throwable t) {
                 warn("[rewards] 加载配置 " + id + " 时出现错误: " + t.getMessage());
             }
