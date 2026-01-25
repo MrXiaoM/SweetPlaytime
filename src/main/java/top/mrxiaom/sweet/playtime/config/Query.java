@@ -50,13 +50,20 @@ public class Query {
             String str = arg.trim();
             if (str.equalsIgnoreCase("today")) {
                 startDate = LocalDate.now();
+                endDate = startDate.plusDays(1);
                 continue;
+            }
+            if (str.equalsIgnoreCase("current_month") || str.equalsIgnoreCase("this_month")
+            || str.equalsIgnoreCase("current month") || str.equalsIgnoreCase("this month")) {
+                startDate = LocalDate.now().withDayOfMonth(1);
+                endDate = startDate.plusMonths(1);
             }
             DayOfWeek dayOfWeek = Util.valueOrNull(DayOfWeek.class, str);
             if (dayOfWeek != null) {
                 LocalDate now = LocalDate.now();
                 LocalDate monday = now.minusDays(now.getDayOfWeek().getValue() - 1);
                 startDate = monday.plusDays(dayOfWeek.getValue() - 1);
+                endDate = startDate.plusWeeks(1);
             }
             if (!str.contains("=")) continue;
             int i = str.indexOf('=');
