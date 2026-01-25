@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
+import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
 public class SweetPlaytime extends BukkitPlugin {
     public static SweetPlaytime getInstance() {
@@ -63,9 +64,14 @@ public class SweetPlaytime extends BukkitPlugin {
     }
 
     private PlaytimeDatabase playtimeDatabase;
+    private RewardStatusDatabase rewardStatusDatabase;
     public PlaytimeDatabase getPlaytimeDatabase() {
         return playtimeDatabase;
     }
+    public RewardStatusDatabase getRewardStatusDatabase() {
+        return rewardStatusDatabase;
+    }
+
     private String tag = "default";
     public String tag() {
         return tag;
@@ -74,7 +80,8 @@ public class SweetPlaytime extends BukkitPlugin {
     @Override
     protected void beforeEnable() {
         options.registerDatabase(
-                this.playtimeDatabase = new PlaytimeDatabase(this)
+                this.playtimeDatabase = new PlaytimeDatabase(this),
+                this.rewardStatusDatabase = new RewardStatusDatabase(this)
         );
     }
 

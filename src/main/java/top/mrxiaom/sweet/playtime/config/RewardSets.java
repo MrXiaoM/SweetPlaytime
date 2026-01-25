@@ -6,15 +6,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.mrxiaom.pluginbase.actions.ActionProviders;
 import top.mrxiaom.pluginbase.api.IRunTask;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
 import top.mrxiaom.pluginbase.utils.Util;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
+import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RewardSets {
@@ -59,6 +62,7 @@ public class RewardSets {
         for (ConfigurationSection section : ConfigUtils.getSectionList(config, "rewards")) {
             this.rewards.add(new Reward(this, section));
         }
+        this.rewards.sort(Comparator.comparingLong(Reward::getDurationSeconds));
 
         if (this.autoClaimPeriod != null) {
             IRunTask task = plugin.getScheduler().runTaskTimerAsync(this::checkAutoClaim, this.autoClaimPeriod, this.autoClaimPeriod);
@@ -67,22 +71,68 @@ public class RewardSets {
     }
 
     public void checkAutoClaim() {
+        Map<Player, List<Long>> durationMap = new HashMap<>();
+        // 执行自动领取检查任务
         for (Player player : Bukkit.getOnlinePlayers()) {
-            doAutoClaim(player);
+            List<Long> durationList = doAutoClaim(player);
+            if (durationList != null && !durationList.isEmpty()) {
+                durationMap.put(player, durationList);
+            }
         }
+        // 提交领取成功的记录到数据库
+        if (!durationMap.isEmpty()) plugin.getScheduler().runTaskAsync(() -> {
+            LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
+            RewardStatusDatabase db = plugin.getRewardStatusDatabase();
+            try (Connection conn = plugin.getConnection()) {
+                for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
+                    Player player = entry.getKey();
+                    db.markClaimed(conn, player, id, entry.getValue(), outdateTime);
+                }
+            } catch (SQLException e) {
+                db.warn(e);
+            }
+        });
     }
 
-    public void doAutoClaim(Player player) {
+    /**
+     * 执行自动领取操作，如果领取成功，提交到数据库
+     * @param player 待领取奖励的玩家
+     * @return 是否有领取到奖励
+     */
+    public boolean doClaimAndSubmit(Player player) {
+        List<Long> durationList = doAutoClaim(player);
+        if (durationList != null && !durationList.isEmpty()) {
+            plugin.getScheduler().runTaskAsync(() -> {
+                LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
+                plugin.getRewardStatusDatabase().markClaimed(player, id, durationList, outdateTime);
+            });
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 执行自动领取奖励操作
+     * @param player 待领取奖励的玩家
+     * @return 领取成功的累计在线时长，如果数据库调用失败，返回 <code>null</code>
+     */
+    public List<Long> doAutoClaim(Player player) {
         PlaytimeDatabase db = plugin.getPlaytimeDatabase();
         UUID uuid = player.getUniqueId();
         Long fromDb = createQuery().collectPlaytimeWithCache(db, uuid);
-        if (fromDb == null) return;
+        if (fromDb == null) return null;
         long seconds = fromDb + db.getCurrentOnlineSeconds(uuid);
+        List<Long> claimed = plugin.getRewardStatusDatabase().getClaimedWithCache(uuid, id);
+        List<Long> durationList = new ArrayList<>();
         for (Reward reward : rewards) {
-            if (seconds >= reward.getDurationSeconds()) {
-                // TODO: 新建数据库用于储存领取状态
+            long duration = reward.getDurationSeconds();
+            if (claimed.contains(duration)) continue;
+            if (seconds >= duration) { // 累计在线时间到了，执行奖励命令
+                durationList.add(duration);
+                ActionProviders.run(plugin, player, reward.getRewardActions());
             }
         }
+        return durationList;
     }
 
     public @NotNull SweetPlaytime getPlugin() {

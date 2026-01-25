@@ -1,5 +1,34 @@
 package top.mrxiaom.sweet.playtime.config;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.function.Supplier;
+
 public enum EnumOutdatePeriod {
-    DAILY, WEEKLY, MONTHLY
+    DAILY(() -> LocalDate.now().plusDays(1)),
+    WEEKLY(() -> {
+        LocalDate nowDate = LocalDate.now();
+        DayOfWeek dayOfWeek = nowDate.getDayOfWeek();
+        return nowDate.plusWeeks(1).minusDays(dayOfWeek.getValue() - 1);
+    }),
+    MONTHLY(() -> LocalDate.now().plusMonths(1).withDayOfMonth(1)),
+
+    ;
+    private final Supplier<LocalDate> impl;
+    EnumOutdatePeriod(Supplier<LocalDate> impl) {
+        this.impl = impl;
+    }
+
+    @NotNull
+    public LocalDate getNextOutdateDate() {
+        return impl.get();
+    }
+
+    @NotNull
+    public LocalDateTime getNextOutdateDateTime() {
+        return getNextOutdateDate().atTime(0, 0);
+    }
 }
