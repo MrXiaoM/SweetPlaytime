@@ -117,12 +117,15 @@ public class RewardSets {
      * @return 领取成功的累计在线时长，如果数据库调用失败，返回 <code>null</code>
      */
     public List<Long> doAutoClaim(Player player) {
-        PlaytimeDatabase db = plugin.getPlaytimeDatabase();
+        PlaytimeDatabase pdb = plugin.getPlaytimeDatabase();
+        RewardStatusDatabase rdb = plugin.getRewardStatusDatabase();
         UUID uuid = player.getUniqueId();
-        Long fromDb = createQuery().collectPlaytimeWithCache(db, uuid);
+        // 获取玩家当前在线时间
+        Long fromDb = createQuery().collectPlaytimeWithCache(pdb, uuid);
         if (fromDb == null) return null;
-        long seconds = fromDb + db.getCurrentOnlineSeconds(uuid);
-        List<Long> claimed = plugin.getRewardStatusDatabase().getClaimedWithCache(uuid, id);
+        long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
+        // 获取玩家已经领取过的奖励列表
+        List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
         List<Long> durationList = new ArrayList<>();
         for (Reward reward : rewards) {
             long duration = reward.getDurationSeconds();
