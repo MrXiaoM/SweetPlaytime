@@ -7,9 +7,9 @@ query:
   - today
 
 # 已领取奖励状态的到期时间周期
-# 目前仅支持 DAILY, WEEKLY, MONTHLY, FOREVER
+# 目前支持 AUTO (通过query获取), DAILY, WEEKLY, MONTHLY, FOREVER
 # 以及固定到期时间 FIXED yyyy-MM-dd
-status-outdate-period: DAILY
+status-outdate-period: AUTO
 
 # 自动领取在线奖励的检查周期，设为 none 代表不自动领取
 auto-claim-period: 1s

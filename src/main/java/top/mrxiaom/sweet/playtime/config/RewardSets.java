@@ -45,7 +45,7 @@ public class RewardSets {
         if (Query.parse(query, error) == null) {
             throw new IllegalArgumentException("查询参数 query 解析错误: " + error.get());
         }
-        this.statusOutdatePeriod = parsePeriod(config.getString("status-outdate-period"));
+        this.statusOutdatePeriod = parsePeriod(config.getString("status-outdate-period", "auto"));
         String autoClaimPeriod = config.getString("auto-claim-period", "none");
         if (autoClaimPeriod.equalsIgnoreCase("none")) {
             this.autoClaimPeriod = null;
@@ -189,9 +189,12 @@ public class RewardSets {
         this.checkPeriodTask = checkPeriodTask;
     }
 
-    private static OutdatePeriod parsePeriod(String str) {
+    private OutdatePeriod parsePeriod(String str) {
         if (str == null || str.isEmpty()) {
             throw new IllegalArgumentException("status-outdate-period 的数值无效");
+        }
+        if (str.equalsIgnoreCase("auto")) {
+            return new AutoOutdatePeriod(this::createQuery);
         }
         if (str.toLowerCase().startsWith("fixed ")) {
             try {
