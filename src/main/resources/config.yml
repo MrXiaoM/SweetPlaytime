@@ -1,6 +1,8 @@
 # 在数据库中记录的标签
 tag: 'default'
 
+rewards-folder: './rewards'
+
 # 数据清理配置
 cleanup:
   # 是否启用数据清理功能？只需要一个子服开启即可

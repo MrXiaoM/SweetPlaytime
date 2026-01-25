@@ -1,0 +1,27 @@
+# 需要什么权限才能领取这个在线奖励集合
+# 设为 none 代表无需权限
+permission: sweetplaytime.example
+
+# 查询参数，与变量格式相同
+query:
+  - today
+
+# 已领取奖励状态的到期时间周期
+# 目前仅支持 DAILY, WEEKLY, MONTHLY
+status-outdate-period: DAILY
+
+# 自动领取在线奖励的检查周期，设为 none 代表不自动领取
+auto-claim-period: 1s
+
+# 在线奖励
+rewards:
+    # 累计在线时间到多少时，可领取这个奖励
+  - duration: 1h
+    # 显示名称
+    display: '在线1小时'
+    # 奖励描述
+    description:
+      - '奖励100金币'
+    # 奖励命令
+    reward-actions:
+      - '[console]money give %player_name% 100'
