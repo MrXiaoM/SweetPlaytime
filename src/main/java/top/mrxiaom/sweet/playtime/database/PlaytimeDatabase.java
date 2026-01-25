@@ -243,13 +243,19 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
      * @param beforeThat 要清理早于什么时候记录的数据
      */
     public void cleanup(LocalDateTime beforeThat) {
+        try (Connection conn = plugin.getConnection()) {
+            cleanup(conn, beforeThat);
+        } catch (SQLException e) {
+            warn(e);
+        }
+    }
+
+    public void cleanup(Connection conn, LocalDateTime beforeThat) throws SQLException {
         String before = beforeThat.format(timeFormat);
-        try (Connection conn = plugin.getConnection(); PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM `" + TABLE_NAME + "` WHERE `record_start_time` < '" + before + "';"
         )) {
             ps.execute();
-        } catch (SQLException e) {
-            warn(e);
         }
     }
 }

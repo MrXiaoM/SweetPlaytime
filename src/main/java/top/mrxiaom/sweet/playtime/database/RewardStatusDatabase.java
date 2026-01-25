@@ -146,13 +146,19 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
     }
 
     public void cleanup() {
+        try (Connection conn = plugin.getConnection()) {
+            cleanup(conn);
+        } catch (SQLException e) {
+            warn(e);
+        }
+    }
+
+    public void cleanup(Connection conn) throws SQLException {
         String now = LocalDateTime.now().format(timeFormat);
-        try (Connection conn = plugin.getConnection(); PreparedStatement ps = conn.prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM `" + TABLE_NAME + "` WHERE `outdate_time` < '" + now + "';"
         )) {
             ps.execute();
-        } catch (SQLException e) {
-            warn(e);
         }
     }
 }

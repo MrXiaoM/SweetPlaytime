@@ -6,6 +6,8 @@ import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
 import top.mrxiaom.sweet.playtime.config.Query;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 @AutoRegister
@@ -42,7 +44,12 @@ public class CleanupManager extends AbstractModule {
     public void cleanup() {
         if (keepTimeSeconds == 0L) return;
         LocalDateTime beforeThat = LocalDateTime.now().minusSeconds(keepTimeSeconds);
-        plugin.getPlaytimeDatabase().cleanup(beforeThat);
+        try (Connection conn = plugin.getConnection()) {
+            plugin.getPlaytimeDatabase().cleanup(conn, beforeThat);
+            plugin.getRewardStatusDatabase().cleanup(conn);
+        } catch (SQLException e) {
+            warn(e);
+        }
     }
 
     @Override
