@@ -1,6 +1,11 @@
 package top.mrxiaom.sweet.playtime.database;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.database.IDatabase;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
@@ -12,17 +17,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
-public class RewardStatusDatabase extends AbstractPluginHolder implements IDatabase {
+public class RewardStatusDatabase extends AbstractPluginHolder implements IDatabase, Listener {
     private static final DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private String TABLE_NAME;
+    private final Map<UUID, RewardStatusCacheCollection> cacheMap = new HashMap<>();
 
     public RewardStatusDatabase(SweetPlaytime plugin) {
         super(plugin);
         register();
+        registerEvents();
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e) {
+        cacheMap.remove(e.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        cacheMap.remove(e.getPlayer().getUniqueId());
     }
 
     @Override
@@ -41,12 +56,22 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
         }
     }
 
+    @NotNull
+    private RewardStatusCacheCollection getOrCreateCache(UUID playerUUID) {
+        RewardStatusCacheCollection exists = cacheMap.get(playerUUID);
+        if (exists != null) return exists;
+        RewardStatusCacheCollection newOne = new RewardStatusCacheCollection(playerUUID);
+        cacheMap.put(playerUUID, newOne);
+        return newOne;
+    }
+
     /**
      * 获取已领取的累计时间列表
      * @see RewardStatusDatabase#getClaimed(UUID, String)
      */
     public List<Long> getClaimedWithCache(UUID playerUUID, String rewardSetsId) {
-        // TODO: 实现缓存功能
+        List<Long> exists = getOrCreateCache(playerUUID).getCache(rewardSetsId);
+        if (exists != null) return exists;
         return getClaimed(playerUUID, rewardSetsId);
     }
 
@@ -71,6 +96,7 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
                     durationList.add(result.getLong("duration"));
                 }
             }
+            getOrCreateCache(playerUUID).putCache(rewardSetsId, durationList);
             return durationList;
         } catch (SQLException e) {
             warn(e);
@@ -105,14 +131,17 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
                         "(`uuid`,`name`,`reward_sets_id`,`duration`,`outdate_time`) " +
                         "VALUES(?,?,?,?,'" + outdate + "');"
         )) {
+            UUID uuid = player.getUniqueId();
+            String name = player.getName();
             for (long duration : durationList) {
-                ps.setString(1, player.getUniqueId().toString());
-                ps.setString(2, player.getName());
+                ps.setString(1, uuid.toString());
+                ps.setString(2, name);
                 ps.setString(3, rewardSetsId);
                 ps.setLong(4, duration);
                 ps.addBatch();
             }
             ps.executeBatch();
+            getOrCreateCache(uuid).removeCache(rewardSetsId);
         }
     }
 
