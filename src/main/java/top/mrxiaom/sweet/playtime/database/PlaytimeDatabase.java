@@ -65,12 +65,20 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
         UUID uuid = e.getPlayer().getUniqueId();
         Playtime playtime = players.remove(uuid);
         if (playtime != null) {
-            // TODO: 需要验证是否需要在 onDisable 时提交数据
             plugin.getScheduler().runTaskAsync(() -> {
                 submit(playtime, LocalDateTime.now());
                 cacheMap.remove(uuid);
             });
         }
+    }
+
+    @Override
+    public void onDisable() {
+        for (Playtime playtime : players.values()) {
+            submit(playtime, LocalDateTime.now());
+            cacheMap.remove(playtime.getPlayer().getUniqueId());
+        }
+        players.clear();
     }
 
     @Override
