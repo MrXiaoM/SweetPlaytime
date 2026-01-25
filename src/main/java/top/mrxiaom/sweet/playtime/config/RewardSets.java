@@ -16,7 +16,9 @@ import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,7 +27,7 @@ public class RewardSets {
     private final @NotNull String id;
     private final @Nullable String permission;
     private final @NotNull List<String> query;
-    private final @NotNull EnumOutdatePeriod statusOutdatePeriod;
+    private final @NotNull OutdatePeriod statusOutdatePeriod;
     private final @Nullable Long autoClaimPeriod;
     private final @NotNull List<Reward> rewards;
     private IRunTask checkPeriodTask;
@@ -43,11 +45,7 @@ public class RewardSets {
         if (Query.parse(query, error) == null) {
             throw new IllegalArgumentException("查询参数 query 解析错误: " + error.get());
         }
-        EnumOutdatePeriod statusOutdatePeriod = Util.valueOrNull(EnumOutdatePeriod.class, config.getString("status-outdate-period"));
-        if (statusOutdatePeriod == null) {
-            throw new IllegalArgumentException("status-outdate-period 的数值无效");
-        }
-        this.statusOutdatePeriod = statusOutdatePeriod;
+        this.statusOutdatePeriod = parsePeriod(config.getString("status-outdate-period"));
         String autoClaimPeriod = config.getString("auto-claim-period", "none");
         if (autoClaimPeriod.equalsIgnoreCase("none")) {
             this.autoClaimPeriod = null;
@@ -71,6 +69,8 @@ public class RewardSets {
     }
 
     public void checkAutoClaim() {
+        LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
+        if (outdateTime.isBefore(LocalDateTime.now())) return;
         Map<Player, List<Long>> durationMap = new HashMap<>();
         // 执行自动领取检查任务
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -82,7 +82,6 @@ public class RewardSets {
         }
         // 提交领取成功的记录到数据库
         if (!durationMap.isEmpty()) plugin.getScheduler().runTaskAsync(() -> {
-            LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
             RewardStatusDatabase db = plugin.getRewardStatusDatabase();
             try (Connection conn = plugin.getConnection()) {
                 for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
@@ -163,7 +162,7 @@ public class RewardSets {
         return query;
     }
 
-    public @NotNull EnumOutdatePeriod getStatusOutdatePeriod() {
+    public @NotNull OutdatePeriod getStatusOutdatePeriod() {
         return statusOutdatePeriod;
     }
 
@@ -188,5 +187,24 @@ public class RewardSets {
 
     public void setCheckPeriodTask(IRunTask checkPeriodTask) {
         this.checkPeriodTask = checkPeriodTask;
+    }
+
+    private static OutdatePeriod parsePeriod(String str) {
+        if (str == null || str.isEmpty()) {
+            throw new IllegalArgumentException("status-outdate-period 的数值无效");
+        }
+        if (str.toLowerCase().startsWith("fixed ")) {
+            try {
+                LocalDate endDate = LocalDate.parse(str.substring(6), DateTimeFormatter.ISO_LOCAL_DATE);
+                return new FixedOutdatePeriod(endDate);
+            } catch (Throwable ignored) {
+            }
+            throw new IllegalArgumentException("status-outdate-period 的数值无效");
+        }
+        EnumOutdatePeriod byEnum = Util.valueOrNull(EnumOutdatePeriod.class, str);
+        if (byEnum == null) {
+            throw new IllegalArgumentException("status-outdate-period 的数值无效");
+        }
+        return byEnum;
     }
 }

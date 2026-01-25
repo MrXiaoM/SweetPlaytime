@@ -4,10 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.function.Supplier;
 
-public enum EnumOutdatePeriod {
+public enum EnumOutdatePeriod implements OutdatePeriod {
     DAILY(() -> LocalDate.now().plusDays(1)),
     WEEKLY(() -> {
         LocalDate nowDate = LocalDate.now();
@@ -15,6 +14,7 @@ public enum EnumOutdatePeriod {
         return nowDate.plusWeeks(1).minusDays(dayOfWeek.getValue() - 1);
     }),
     MONTHLY(() -> LocalDate.now().plusMonths(1).withDayOfMonth(1)),
+    FOREVER(() -> LocalDate.now().plusYears(100).withDayOfYear(1)),
 
     ;
     private final Supplier<LocalDate> impl;
@@ -25,10 +25,5 @@ public enum EnumOutdatePeriod {
     @NotNull
     public LocalDate getNextOutdateDate() {
         return impl.get();
-    }
-
-    @NotNull
-    public LocalDateTime getNextOutdateDateTime() {
-        return getNextOutdateDate().atTime(0, 0);
     }
 }
