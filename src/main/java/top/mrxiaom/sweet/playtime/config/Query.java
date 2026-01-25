@@ -85,4 +85,43 @@ public class Query {
         }
         return new Query(tag, startDate, endDate);
     }
+
+    public static Long parseSeconds(String str) {
+        if (str == null || str.isEmpty()) return null;
+        char[] array = str.toCharArray();
+        long seconds = 0L;
+        Integer value = null;
+        for (char ch : array) {
+            if (ch >= '0' && ch <= '9') {
+                int num = ch - '0';
+                if (value == null) {
+                    value = num;
+                } else {
+                    value = (value * 10) + num;
+                }
+                continue;
+            }
+            if (value == null) {
+                return null;
+            }
+            if (ch == 'd') {
+                seconds += value * 86400L;
+                continue;
+            }
+            if (ch == 'h') {
+                seconds += value * 3600L;
+                continue;
+            }
+            if (ch == 'm') {
+                seconds += value * 60L;
+                continue;
+            }
+            if (ch == 's') {
+                seconds += value;
+                continue;
+            }
+            return null;
+        }
+        return seconds;
+    }
 }

@@ -4,6 +4,7 @@ import org.bukkit.configuration.MemoryConfiguration;
 import top.mrxiaom.pluginbase.api.IRunTask;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
+import top.mrxiaom.sweet.playtime.config.Query;
 
 import java.time.LocalDateTime;
 
@@ -22,12 +23,12 @@ public class CleanupManager extends AbstractModule {
             task = null;
         }
         if (config.getBoolean("cleanup.enable")) {
-            Long keepTime = parseSeconds(config.getString("cleanup.keep-time"));
+            Long keepTime = Query.parseSeconds(config.getString("cleanup.keep-time"));
             if (keepTime == null) {
                 warn("cleanup.keep-time 的值无效");
                 return;
             }
-            Long checkPeriodSeconds = parseSeconds(config.getString("cleanup.check-period"));
+            Long checkPeriodSeconds = Query.parseSeconds(config.getString("cleanup.check-period"));
             if (checkPeriodSeconds == null) {
                 warn("cleanup.check-period 的值无效");
                 return;
@@ -54,44 +55,5 @@ public class CleanupManager extends AbstractModule {
 
     public static CleanupManager inst() {
         return instanceOf(CleanupManager.class);
-    }
-
-    private static Long parseSeconds(String str) {
-        if (str == null || str.isEmpty()) return null;
-        char[] array = str.toCharArray();
-        long seconds = 0L;
-        Integer value = null;
-        for (char ch : array) {
-            if (ch >= '0' && ch <= '9') {
-                int num = ch - '0';
-                if (value == null) {
-                    value = num;
-                } else {
-                    value = (value * 10) + num;
-                }
-                continue;
-            }
-            if (value == null) {
-                return null;
-            }
-            if (ch == 'd') {
-                seconds += value * 86400L;
-                continue;
-            }
-            if (ch == 'h') {
-                seconds += value * 3600L;
-                continue;
-            }
-            if (ch == 'm') {
-                seconds += value * 60L;
-                continue;
-            }
-            if (ch == 's') {
-                seconds += value;
-                continue;
-            }
-            return null;
-        }
-        return seconds;
     }
 }
