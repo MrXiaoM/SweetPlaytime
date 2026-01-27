@@ -13,7 +13,8 @@ public enum EnumOutdatePeriod implements OutdatePeriod {
         DayOfWeek dayOfWeek = nowDate.getDayOfWeek();
         return nowDate.plusWeeks(1).minusDays(dayOfWeek.getValue() - 1);
     }),
-    MONTHLY(() -> LocalDate.now().plusMonths(1).withDayOfMonth(1)),
+    MONTHLY(() -> LocalDate.now().withDayOfMonth(1).plusMonths(1)),
+    YEARLY(() -> LocalDate.now().withDayOfYear(1).plusYears(1)),
     FOREVER(() -> LocalDate.now().plusYears(100).withDayOfYear(1)),
 
     ;

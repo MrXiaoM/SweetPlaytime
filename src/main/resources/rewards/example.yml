@@ -7,7 +7,7 @@ query:
   - today
 
 # 已领取奖励状态的到期时间周期
-# 目前支持 AUTO (通过query获取), DAILY, WEEKLY, MONTHLY, FOREVER
+# 目前支持 AUTO (通过query获取), DAILY, WEEKLY, MONTHLY, YEARLY, FOREVER
 # 以及固定到期时间 FIXED yyyy-MM-dd
 status-outdate-period: AUTO
 

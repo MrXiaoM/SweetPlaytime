@@ -58,6 +58,11 @@ public class Query {
                 startDate = LocalDate.now().withDayOfMonth(1);
                 endDate = startDate.plusMonths(1);
             }
+            if (str.equalsIgnoreCase("current_year") || str.equalsIgnoreCase("this_year")
+            || str.equalsIgnoreCase("current year") || str.equalsIgnoreCase("this year")) {
+                startDate = LocalDate.now().withDayOfYear(1);
+                endDate = startDate.plusYears(1);
+            }
             DayOfWeek dayOfWeek = Util.valueOrNull(DayOfWeek.class, str);
             if (dayOfWeek != null) {
                 LocalDate now = LocalDate.now();
