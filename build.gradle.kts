@@ -14,7 +14,7 @@ val base = top.mrxiaom.gradle.LibraryHelper(project)
 group = "top.mrxiaom.sweet.playtime"
 version = "1.0.0"
 val targetJavaVersion = 8
-val pluginBaseModules = base.modules.run { listOf(library, paper, actions, l10n) }
+val pluginBaseModules = base.modules.run { listOf(library, actions, l10n) }
 val shadowGroup = "top.mrxiaom.sweet.playtime.libs"
 
 repositories {

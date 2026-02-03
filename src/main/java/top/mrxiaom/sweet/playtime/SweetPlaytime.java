@@ -2,10 +2,7 @@ package top.mrxiaom.sweet.playtime;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import top.mrxiaom.pluginbase.BukkitPlugin;
-import top.mrxiaom.pluginbase.paper.PaperFactory;
 import top.mrxiaom.pluginbase.utils.depend.PAPI;
-import top.mrxiaom.pluginbase.utils.inventory.InventoryFactory;
-import top.mrxiaom.pluginbase.utils.item.ItemEditor;
 import top.mrxiaom.pluginbase.utils.scheduler.FoliaLibScheduler;
 import top.mrxiaom.pluginbase.utils.ClassLoaderWrapper;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
@@ -51,16 +48,6 @@ public class SweetPlaytime extends BukkitPlugin {
         for (URL library : libraries) {
             this.classLoader.addURL(library);
         }
-    }
-
-    @Override
-    public @NotNull ItemEditor initItemEditor() {
-        return PaperFactory.createItemEditor();
-    }
-
-    @Override
-    public @NotNull InventoryFactory initInventoryFactory() {
-        return PaperFactory.createInventoryFactory();
     }
 
     private PlaytimeDatabase playtimeDatabase;
