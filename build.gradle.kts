@@ -7,7 +7,7 @@ plugins {
 
 buildscript {
     repositories.mavenCentral()
-    dependencies.classpath("top.mrxiaom:LibrariesResolver-Gradle:1.7.3")
+    dependencies.classpath("top.mrxiaom:LibrariesResolver-Gradle:1.7.5")
 }
 val base = top.mrxiaom.gradle.LibraryHelper(project)
 
@@ -37,12 +37,12 @@ dependencies {
     base.library("net.kyori:adventure-platform-bukkit:4.4.0")
     base.library("net.kyori:adventure-text-minimessage:4.22.0")
     base.library("net.kyori:adventure-text-serializer-plain:4.22.0")
+
     implementation("com.zaxxer:HikariCP:4.0.3") { isTransitive = false }
     implementation("com.github.technicallycoded:FoliaLib:0.4.4") { isTransitive = false }
     for (artifact in pluginBaseModules) {
         implementation("$artifact")
     }
-
     implementation(base.resolver.lite)
 }
 buildConfig {
