@@ -31,6 +31,11 @@ public class Placeholders extends AbstractPluginHolder {
     }
 
     @Override
+    public void onDisable() {
+        extension.unregister();
+    }
+
+    @Override
     public void reloadConfig(MemoryConfiguration config) {
         this.formatSecond = config.getString("time-format.second", "秒");
         this.formatSeconds = config.getString("time-format.seconds", "秒");
