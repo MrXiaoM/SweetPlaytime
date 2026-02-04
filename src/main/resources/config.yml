@@ -11,3 +11,14 @@ cleanup:
   keep-time: 30d
   # 每隔多久清理一次
   check-period: 1h
+
+# 时间格式显示配置
+time-format:
+  second: '秒'
+  seconds: '秒'
+  minute: '分'
+  minutes: '分'
+  hour: '时'
+  hours: '时'
+  day: '天'
+  days: '天'

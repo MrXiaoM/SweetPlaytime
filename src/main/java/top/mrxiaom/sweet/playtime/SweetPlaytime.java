@@ -2,7 +2,6 @@ package top.mrxiaom.sweet.playtime;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import top.mrxiaom.pluginbase.BukkitPlugin;
-import top.mrxiaom.pluginbase.utils.depend.PAPI;
 import top.mrxiaom.pluginbase.utils.scheduler.FoliaLibScheduler;
 import top.mrxiaom.pluginbase.utils.ClassLoaderWrapper;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
@@ -13,7 +12,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
 import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
@@ -79,9 +77,6 @@ public class SweetPlaytime extends BukkitPlugin {
 
     @Override
     protected void afterEnable() {
-        if (PAPI.isEnabled()) {
-            new Placeholders(this).register();
-        }
         getLogger().info("SweetPlaytime 加载完毕");
     }
 }
