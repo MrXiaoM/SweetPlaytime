@@ -34,6 +34,10 @@ public class Reward {
         return durationSeconds;
     }
 
+    public String getDuration(TimeFormat format) {
+        return format.formatSeconds(durationSeconds);
+    }
+
     public String getDisplay() {
         return display;
     }

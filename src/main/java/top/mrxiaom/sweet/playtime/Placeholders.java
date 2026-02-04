@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.pluginbase.utils.depend.PlaceholdersExpansion;
 import top.mrxiaom.sweet.playtime.config.Query;
+import top.mrxiaom.sweet.playtime.config.TimeFormat;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
 import top.mrxiaom.sweet.playtime.func.AbstractPluginHolder;
 
@@ -17,8 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @AutoRegister(requirePlugins = "PlaceholderAPI")
 public class Placeholders extends AbstractPluginHolder {
     private Extension extension;
-    private String formatSecond, formatSeconds, formatMinute, formatMinutes;
-    private String formatHour, formatHours, formatDay, formatDays;
+    private TimeFormat timeFormat;
     public Placeholders(SweetPlaytime plugin) {
         super(plugin, true);
     }
@@ -42,37 +42,7 @@ public class Placeholders extends AbstractPluginHolder {
 
     @Override
     public void reloadConfig(MemoryConfiguration config) {
-        this.formatSecond = config.getString("time-format.second", "秒");
-        this.formatSeconds = config.getString("time-format.seconds", "秒");
-        this.formatMinute = config.getString("time-format.minute", "分");
-        this.formatMinutes = config.getString("time-format.minutes", "分");
-        this.formatHour = config.getString("time-format.hour", "时");
-        this.formatHours = config.getString("time-format.hours", "时");
-        this.formatDay = config.getString("time-format.day", "天");
-        this.formatDays = config.getString("time-format.days", "天");
-    }
-
-    public String formatSeconds(long totalSeconds) {
-        long days = totalSeconds / 86400;
-        long hours = (totalSeconds / 3600) % 24;
-        long minutes = (totalSeconds / 60) % 60;
-        long seconds = totalSeconds % 60;
-        StringBuilder sb = new StringBuilder();
-        if (days != 0) {
-            sb.append(days);
-            sb.append(days == 1 ? formatDay : formatDays);
-        }
-        if (hours != 0) {
-            sb.append(hours);
-            sb.append(hours == 1 ? formatHour : formatHours);
-        }
-        if (minutes != 0) {
-            sb.append(minutes);
-            sb.append(minutes == 1 ? formatMinute : formatMinutes);
-        }
-        sb.append(seconds);
-        sb.append(seconds == 1 ? formatSecond : formatSeconds);
-        return sb.toString();
+        timeFormat = new TimeFormat(config);
     }
 
     public class Extension extends PlaceholdersExpansion<SweetPlaytime> {
@@ -120,7 +90,7 @@ public class Placeholders extends AbstractPluginHolder {
                 if (totalSeconds == null) {
                     return error.get();
                 }
-                return formatSeconds(totalSeconds);
+                return timeFormat.formatSeconds(totalSeconds);
             }
             return super.onPlaceholderRequest(player, params);
         }
