@@ -1,5 +1,6 @@
 package top.mrxiaom.sweet.playtime.func;
 
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import top.mrxiaom.pluginbase.api.IRunTask;
@@ -11,7 +12,9 @@ import top.mrxiaom.sweet.playtime.config.RewardSets;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @AutoRegister
 public class RewardManager extends AbstractModule {
@@ -41,6 +44,25 @@ public class RewardManager extends AbstractModule {
             }
         });
         info("[rewards] 加载了 " + rewards.size() + " 个奖励配置");
+    }
+
+    public Set<String> keys() {
+        return rewards.keySet();
+    }
+
+    public Set<String> keys(CommandSender sender) {
+        if (sender.isOp()) return keys();
+        Set<String> keys = new HashSet<>();
+        for (RewardSets rewardSets : rewards.values()) {
+            if (rewardSets.hasPermission(sender)) {
+                keys.add(rewardSets.getId());
+            }
+        }
+        return keys;
+    }
+
+    public RewardSets get(String id) {
+        return rewards.get(id);
     }
 
     public static RewardManager inst() {

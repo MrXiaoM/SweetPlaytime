@@ -5,14 +5,18 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.sweet.playtime.Messages;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
+import top.mrxiaom.sweet.playtime.config.Query;
+import top.mrxiaom.sweet.playtime.config.RewardSets;
 import top.mrxiaom.sweet.playtime.func.AbstractModule;
 import top.mrxiaom.sweet.playtime.func.CleanupManager;
+import top.mrxiaom.sweet.playtime.func.RewardManager;
 
 import java.util.*;
 
@@ -25,6 +29,32 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, @NotNull String[] args) {
+        if (args.length == 3 && "claim".equalsIgnoreCase(args[0])) {
+            if (!(sender instanceof Player)) {
+                return Messages.player__only.tm(sender);
+            }
+            Player player = (Player) sender;
+            RewardSets rewardSets = RewardManager.inst().get(args[1]);
+            if ("all".equalsIgnoreCase(args[2])) {
+                plugin.getScheduler().runTaskAsync(() -> {
+                    boolean result = rewardSets.doClaimAndSubmit(player);
+                    // TODO: 处理手动领取结果
+                });
+                return true;
+            }
+            Long targetDuration = Query.parseSeconds(args[2]);
+            if (targetDuration == null) {
+                return Messages.Command.claim__wrong_duration.tm(player);
+            }
+            if (!rewardSets.containsDuration(targetDuration)) {
+                return Messages.Command.claim__no_duration.tm(player);
+            }
+            plugin.getScheduler().runTaskAsync(() -> {
+                boolean result = rewardSets.doClaimAndSubmit(player, targetDuration);
+                // TODO: 处理手动领取结果
+            });
+            return true;
+        }
         if (sender.isOp()) {
             if (args.length == 1 && "cleanup".equalsIgnoreCase(args[0]) && sender.isOp()) {
                 plugin.getScheduler().runTaskAsync(() -> {
@@ -47,12 +77,25 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
         return Messages.no_permission.tm(sender);
     }
 
-    private static final List<String> listArg0 = Lists.newArrayList();
-    private static final List<String> listOpArg0 = Lists.newArrayList("reload");
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            return startsWith(sender.isOp() ? listOpArg0 : listArg0, args[0]);
+            List<String> list = new ArrayList<>();
+            if (sender instanceof Player) {
+                list.add("claim");
+            }
+            if (sender.isOp()) {
+                list.add("cleanup");
+                list.add("reload");
+            }
+            return startsWith(list, args[0]);
+        }
+        if (args.length == 2) {
+            if (sender instanceof Player) {
+                if ("claim".equalsIgnoreCase(args[0])) {
+                    return startsWith(RewardManager.inst().keys(sender), args[1]);
+                }
+            }
         }
         return Collections.emptyList();
     }

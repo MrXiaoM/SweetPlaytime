@@ -100,7 +100,17 @@ public class RewardSets {
      * @return 是否有领取到奖励
      */
     public boolean doClaimAndSubmit(Player player) {
-        List<Long> durationList = doAutoClaim(player);
+        return doClaimAndSubmit(player, null);
+    }
+
+    /**
+     * 执行自动领取操作，如果领取成功，提交到数据库
+     * @param player 待领取奖励的玩家
+     * @param targetDuration 要领取奖励的目标在线时间，输入 <code>null</code> 代表领取全部
+     * @return 是否有领取到奖励
+     */
+    public boolean doClaimAndSubmit(Player player, @Nullable Long targetDuration) {
+        List<Long> durationList = doAutoClaim(player, targetDuration);
         if (durationList != null && !durationList.isEmpty()) {
             plugin.getScheduler().runTaskAsync(() -> {
                 LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
@@ -117,6 +127,16 @@ public class RewardSets {
      * @return 领取成功的累计在线时长，如果数据库调用失败，返回 <code>null</code>
      */
     public List<Long> doAutoClaim(Player player) {
+        return doAutoClaim(player, null);
+    }
+
+    /**
+     * 执行领取奖励操作
+     * @param player 待领取奖励的玩家
+     * @param targetDuration 要领取奖励的目标在线时间，输入 <code>null</code> 代表领取全部
+     * @return 领取成功的累计在线时长，如果数据库调用失败，返回 <code>null</code>
+     */
+    public List<Long> doAutoClaim(Player player, @Nullable Long targetDuration) {
         PlaytimeDatabase pdb = plugin.getPlaytimeDatabase();
         RewardStatusDatabase rdb = plugin.getRewardStatusDatabase();
         UUID uuid = player.getUniqueId();
@@ -129,6 +149,7 @@ public class RewardSets {
         List<Long> durationList = new ArrayList<>();
         for (Reward reward : rewards) {
             long duration = reward.getDurationSeconds();
+            if (targetDuration != null && !targetDuration.equals(duration)) continue;
             if (claimed.contains(duration)) continue;
             if (seconds >= duration) { // 累计在线时间到了，执行奖励命令
                 durationList.add(duration);
@@ -172,6 +193,15 @@ public class RewardSets {
 
     public @NotNull List<Reward> getRewards() {
         return rewards;
+    }
+
+    public boolean containsDuration(long durationSeconds) {
+        for (Reward reward : rewards) {
+            if (reward.getDurationSeconds() == durationSeconds) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void cancelCheckPeriodTask() {
