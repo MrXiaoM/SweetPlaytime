@@ -132,7 +132,7 @@ public class RewardSets {
             if (claimed.contains(duration)) continue;
             if (seconds >= duration) { // 累计在线时间到了，执行奖励命令
                 durationList.add(duration);
-                ActionProviders.run(plugin, player, reward.getRewardActions());
+                plugin.getScheduler().runTask(() -> ActionProviders.run(plugin, player, reward.getRewardActions()));
             }
         }
         return durationList;
