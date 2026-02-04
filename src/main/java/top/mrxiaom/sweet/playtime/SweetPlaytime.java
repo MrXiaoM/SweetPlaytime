@@ -2,6 +2,7 @@ package top.mrxiaom.sweet.playtime;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import top.mrxiaom.pluginbase.BukkitPlugin;
+import top.mrxiaom.pluginbase.func.LanguageManager;
 import top.mrxiaom.pluginbase.utils.scheduler.FoliaLibScheduler;
 import top.mrxiaom.pluginbase.utils.ClassLoaderWrapper;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
@@ -64,6 +65,12 @@ public class SweetPlaytime extends BukkitPlugin {
 
     @Override
     protected void beforeEnable() {
+        LanguageManager.inst()
+                .setLangFile("messages.yml")
+                .register(Messages.class)
+                .register(Messages.Command.class)
+                .reload();
+
         options.registerDatabase(
                 this.playtimeDatabase = new PlaytimeDatabase(this),
                 this.rewardStatusDatabase = new RewardStatusDatabase(this)
