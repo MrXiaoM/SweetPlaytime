@@ -16,23 +16,28 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @AutoRegister(requirePlugins = "PlaceholderAPI")
 public class Placeholders extends AbstractPluginHolder {
-    private final Extension extension;
+    private Extension extension;
     private String formatSecond, formatSeconds, formatMinute, formatMinutes;
     private String formatHour, formatHours, formatDay, formatDays;
     public Placeholders(SweetPlaytime plugin) {
         super(plugin, true);
-        this.extension = new Extension(plugin);
     }
 
     @Override
     protected void register() {
         super.register();
-        extension.register();
+        if (extension == null) {
+            extension = new Extension(plugin);
+            extension.register();
+        }
     }
 
     @Override
     public void onDisable() {
-        extension.unregister();
+        if (extension != null) {
+            extension.unregister();
+            extension = null;
+        }
     }
 
     @Override
