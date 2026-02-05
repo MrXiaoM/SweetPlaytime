@@ -159,6 +159,44 @@ public class RewardSets {
         return durationList;
     }
 
+    /**
+     * 获取在线奖励领取状态
+     * @param player 待领取奖励的玩家
+     * @param targetDuration 要领取奖励的目标在线时间，输入 <code>null</code> 代表领取全部
+     * @return <ul>
+     *     <li><code>0</code> 没有可领取的奖励</li>
+     *     <li><code>1</code> 可领取奖励</li>
+     *     <li><code>2</code> （仅输入了 targetDuration 时）奖励已经领取了</li>
+     * </ul>
+     */
+    public int checkClaimStatus(Player player, @Nullable Long targetDuration) {
+        PlaytimeDatabase pdb = plugin.getPlaytimeDatabase();
+        RewardStatusDatabase rdb = plugin.getRewardStatusDatabase();
+        UUID uuid = player.getUniqueId();
+        // 获取玩家当前在线时间
+        Long fromDb = createQuery().collectPlaytimeWithCache(pdb, uuid);
+        if (fromDb == null) return -1;
+        long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
+        // 获取玩家已经领取过的奖励列表
+        List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
+
+        for (Reward reward : rewards) {
+            long duration = reward.getDurationSeconds();
+            if (targetDuration != null && !targetDuration.equals(duration)) continue;
+            if (claimed.contains(duration)) {
+                if (targetDuration != null) {
+                    return 2;
+                } else {
+                    continue;
+                }
+            }
+            if (seconds >= duration) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
     public @NotNull SweetPlaytime getPlugin() {
         return plugin;
     }

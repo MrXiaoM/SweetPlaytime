@@ -8,9 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.pluginbase.utils.depend.PlaceholdersExpansion;
 import top.mrxiaom.sweet.playtime.config.Query;
+import top.mrxiaom.sweet.playtime.config.RewardSets;
 import top.mrxiaom.sweet.playtime.config.TimeFormat;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
 import top.mrxiaom.sweet.playtime.func.AbstractPluginHolder;
+import top.mrxiaom.sweet.playtime.func.RewardManager;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,6 +93,26 @@ public class Placeholders extends AbstractPluginHolder {
                     return error.get();
                 }
                 return timeFormat.formatSeconds(totalSeconds);
+            }
+            if (params.startsWith("status_")) {
+                String[] split = params.substring(7).split(":", 2);
+                if (split.length == 2) {
+                    RewardSets rewardSets = RewardManager.inst().get(split[0]);
+                    if (rewardSets == null) {
+                        return "NOT_FOUND";
+                    }
+                    if ("all".equalsIgnoreCase(split[1])) {
+                        return String.valueOf(rewardSets.checkClaimStatus(player, null));
+                    }
+                    Long targetDuration = Query.parseSeconds(split[1]);
+                    if (targetDuration == null) {
+                        return "WRONG_DURATION_FORMAT";
+                    }
+                    if (!rewardSets.containsDuration(targetDuration)) {
+                        return "NO_DURATION_FOUND";
+                    }
+                    return String.valueOf(rewardSets.checkClaimStatus(player, targetDuration));
+                }
             }
             return super.onPlaceholderRequest(player, params);
         }
