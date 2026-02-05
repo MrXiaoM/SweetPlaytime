@@ -7,6 +7,7 @@ import org.bukkit.permissions.Permissible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.actions.ActionProviders;
+import top.mrxiaom.pluginbase.api.IAction;
 import top.mrxiaom.pluginbase.api.IRunTask;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
 import top.mrxiaom.pluginbase.utils.Util;
@@ -27,6 +28,7 @@ public class RewardSets {
     private final @NotNull String id;
     private final @Nullable String permission;
     private final @NotNull List<String> query;
+    private final List<IAction> claimAllSuccess, claimAllFailed, claimSingleSuccess, claimSingleFailed;
     private final @NotNull OutdatePeriod statusOutdatePeriod;
     private final @Nullable Long autoClaimPeriod;
     private final @NotNull List<Reward> rewards;
@@ -45,6 +47,10 @@ public class RewardSets {
         if (Query.parse(query, error) == null) {
             throw new IllegalArgumentException("查询参数 query 解析错误: " + error.get());
         }
+        this.claimAllSuccess = ActionProviders.loadActions(config, "command-claim-actions.all.success");
+        this.claimAllFailed = ActionProviders.loadActions(config, "command-claim-actions.all.failed");
+        this.claimSingleSuccess = ActionProviders.loadActions(config, "command-claim-actions.single.success");
+        this.claimSingleFailed = ActionProviders.loadActions(config, "command-claim-actions.single.failed");
         this.statusOutdatePeriod = parsePeriod(config.getString("status-outdate-period", "auto"));
         String autoClaimPeriod = config.getString("auto-claim-period", "none");
         if (autoClaimPeriod.equalsIgnoreCase("none")) {
@@ -219,6 +225,22 @@ public class RewardSets {
             throw new IllegalStateException("预料中的错误: 奖励配置 " + id + " 的查询参数 query 解析错误");
         }
         return query;
+    }
+
+    public List<IAction> getClaimAllSuccess() {
+        return claimAllSuccess;
+    }
+
+    public List<IAction> getClaimAllFailed() {
+        return claimAllFailed;
+    }
+
+    public List<IAction> getClaimSingleSuccess() {
+        return claimSingleSuccess;
+    }
+
+    public List<IAction> getClaimSingleFailed() {
+        return claimSingleFailed;
     }
 
     public @NotNull OutdatePeriod getStatusOutdatePeriod() {

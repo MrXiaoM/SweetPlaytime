@@ -9,6 +9,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.mrxiaom.pluginbase.actions.ActionProviders;
+import top.mrxiaom.pluginbase.api.IAction;
 import top.mrxiaom.pluginbase.func.AutoRegister;
 import top.mrxiaom.sweet.playtime.Messages;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
@@ -38,7 +40,10 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
             if ("all".equalsIgnoreCase(args[2])) {
                 plugin.getScheduler().runTaskAsync(() -> {
                     boolean result = rewardSets.doClaimAndSubmit(player);
-                    // TODO: 处理手动领取结果
+                    List<IAction> list = result ? rewardSets.getClaimAllSuccess() : rewardSets.getClaimAllFailed();
+                    if (!list.isEmpty()) {
+                        plugin.getScheduler().runTask(() -> ActionProviders.run(plugin, player, list));
+                    }
                 });
                 return true;
             }
@@ -51,7 +56,10 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
             }
             plugin.getScheduler().runTaskAsync(() -> {
                 boolean result = rewardSets.doClaimAndSubmit(player, targetDuration);
-                // TODO: 处理手动领取结果
+                List<IAction> list = result ? rewardSets.getClaimSingleSuccess() : rewardSets.getClaimSingleFailed();
+                if (!list.isEmpty()) {
+                    plugin.getScheduler().runTask(() -> ActionProviders.run(plugin, player, list));
+                }
             });
             return true;
         }

@@ -6,6 +6,16 @@ permission: sweetplaytime.example
 query:
   - today
 
+# 通过 /pt claim 命令手动领取成功/失败时执行的操作
+# 可以在这里添加提示消息等等
+command-claim-actions:
+  all:
+    success: []
+    failed: []
+  single:
+    success: []
+    failed: []
+
 # 已领取奖励状态的到期时间周期
 # 目前支持 AUTO (通过query获取), DAILY, WEEKLY, MONTHLY, YEARLY, FOREVER
 # 以及固定到期时间 FIXED yyyy-MM-dd
