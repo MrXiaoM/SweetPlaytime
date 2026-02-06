@@ -15,8 +15,6 @@ import top.mrxiaom.sweet.playtime.SweetPlaytime;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
 import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -87,17 +85,9 @@ public class RewardSets {
             }
         }
         // 提交领取成功的记录到数据库
-        if (!durationMap.isEmpty()) plugin.getScheduler().runTaskAsync(() -> {
-            RewardStatusDatabase db = plugin.getRewardStatusDatabase();
-            try (Connection conn = plugin.getConnection()) {
-                for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
-                    Player player = entry.getKey();
-                    db.markClaimed(conn, player, id, entry.getValue(), outdateTime);
-                }
-            } catch (SQLException e) {
-                db.warn(e);
-            }
-        });
+        if (!durationMap.isEmpty()) {
+            plugin.getRewardStatusDatabase().markClaimed(id, durationMap, outdateTime);
+        }
     }
 
     /**
@@ -276,6 +266,9 @@ public class RewardSets {
     }
 
     public void setCheckPeriodTask(IRunTask checkPeriodTask) {
+        if (this.checkPeriodTask != null) {
+            this.checkPeriodTask.cancel();
+        }
         this.checkPeriodTask = checkPeriodTask;
     }
 

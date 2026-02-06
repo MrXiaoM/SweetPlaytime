@@ -105,6 +105,34 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
     }
 
     public void markClaimed(
+            String rewardSetsId,
+            Map<Player, List<Long>> durationMap,
+            LocalDateTime outdateTime
+    ) {
+        for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
+            RewardStatusCacheCollection cache = getOrCreateCache(entry.getKey().getUniqueId());
+            List<Long> exists = cache.getCache(rewardSetsId);
+            if (exists != null) {
+                exists.addAll(entry.getValue());
+                cache.putCache(rewardSetsId, exists);
+            } else {
+                cache.putCache(rewardSetsId, entry.getValue());
+            }
+        }
+        plugin.getScheduler().runTaskAsync(() -> {
+            RewardStatusDatabase db = plugin.getRewardStatusDatabase();
+            try (Connection conn = plugin.getConnection()) {
+                for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
+                    Player player = entry.getKey();
+                    db.markClaimed(conn, player, rewardSetsId, entry.getValue(), outdateTime);
+                }
+            } catch (SQLException e) {
+                db.warn(e);
+            }
+        });
+    }
+
+    public void markClaimed(
             Player player,
             String rewardSetsId,
             List<Long> durationList,
