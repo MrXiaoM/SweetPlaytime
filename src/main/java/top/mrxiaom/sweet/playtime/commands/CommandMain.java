@@ -37,6 +37,9 @@ public class CommandMain extends AbstractModule implements CommandExecutor, TabC
             }
             Player player = (Player) sender;
             RewardSets rewardSets = RewardManager.inst().get(args[1]);
+            if (rewardSets == null) {
+                return Messages.Command.claim__not_found.tm(player);
+            }
             if ("all".equalsIgnoreCase(args[2])) {
                 plugin.getScheduler().runTaskAsync(() -> {
                     boolean result = rewardSets.doClaimAndSubmit(player);

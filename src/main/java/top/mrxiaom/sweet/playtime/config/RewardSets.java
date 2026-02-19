@@ -67,7 +67,8 @@ public class RewardSets {
         this.rewards.sort(Comparator.comparingLong(Reward::getDurationSeconds));
 
         if (this.autoClaimPeriod != null) {
-            IRunTask task = plugin.getScheduler().runTaskTimerAsync(this::checkAutoClaim, this.autoClaimPeriod, this.autoClaimPeriod);
+            long period = this.autoClaimPeriod * 20;
+            IRunTask task = plugin.getScheduler().runTaskTimerAsync(this::checkAutoClaim, period, period);
             setCheckPeriodTask(task);
         }
     }
@@ -142,6 +143,7 @@ public class RewardSets {
         long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
         // 获取玩家已经领取过的奖励列表
         List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
+        if (claimed == null) return null;
         List<Long> durationList = new ArrayList<>();
         for (Reward reward : rewards) {
             long duration = reward.getDurationSeconds();
@@ -175,6 +177,7 @@ public class RewardSets {
         long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
         // 获取玩家已经领取过的奖励列表
         List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
+        if (claimed == null) return -1;
 
         for (Reward reward : rewards) {
             long duration = reward.getDurationSeconds();

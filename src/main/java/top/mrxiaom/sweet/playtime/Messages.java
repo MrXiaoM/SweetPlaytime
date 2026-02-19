@@ -12,6 +12,7 @@ public class Messages {
 
     @Language(prefix="messages.command.")
     public static class Command {
+        public static final Message claim__not_found = field("&e指定的奖励集合不存在");
         public static final Message claim__wrong_duration = field("&e输入的时间格式错误");
         public static final Message claim__no_duration = field("&e这个奖励集合不存在指定的在线奖励");
         public static final Message cleanup__success = field("&c数据清理执行完成");
