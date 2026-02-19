@@ -118,18 +118,22 @@ public class Query {
             }
             if (ch == 'd') {
                 seconds += value * 86400L;
+                value = null;
                 continue;
             }
             if (ch == 'h') {
                 seconds += value * 3600L;
+                value = null;
                 continue;
             }
             if (ch == 'm') {
                 seconds += value * 60L;
+                value = null;
                 continue;
             }
             if (ch == 's') {
                 seconds += value;
+                value = null;
                 continue;
             }
             return null;
