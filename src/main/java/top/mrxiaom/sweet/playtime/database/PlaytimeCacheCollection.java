@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 @ApiStatus.Internal
@@ -45,13 +46,10 @@ public class PlaytimeCacheCollection {
     }
 
     public static String key(@Nullable String tag, @Nullable LocalDateTime startTime, @Nullable LocalDateTime endTime) {
-        StringBuilder sb = new StringBuilder();
-        if (tag != null) sb.append(tag);
-        sb.append(";");
-        if (startTime != null) sb.append(startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        sb.append(";");
-        if (endTime != null) sb.append(endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        sb.append(";");
-        return sb.toString();
+        StringJoiner joiner = new StringJoiner(";");
+        if (tag != null) joiner.add(tag);
+        if (startTime != null) joiner.add(startTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        if (endTime != null) joiner.add(endTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        return joiner.toString();
     }
 }

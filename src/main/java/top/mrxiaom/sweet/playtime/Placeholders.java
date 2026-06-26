@@ -1,11 +1,11 @@
 package top.mrxiaom.sweet.playtime;
 
-import com.google.common.collect.Lists;
 import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.func.AutoRegister;
+import top.mrxiaom.pluginbase.utils.CollectionUtils;
 import top.mrxiaom.pluginbase.utils.depend.PlaceholdersExpansion;
 import top.mrxiaom.sweet.playtime.config.Query;
 import top.mrxiaom.sweet.playtime.config.RewardSets;
@@ -14,6 +14,7 @@ import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
 import top.mrxiaom.sweet.playtime.func.AbstractPluginHolder;
 import top.mrxiaom.sweet.playtime.func.RewardManager;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -52,16 +53,11 @@ public class Placeholders extends AbstractPluginHolder {
             super(plugin);
         }
 
-        @Override
-        public boolean persist() {
-            return true;
-        }
-
         private Long parseAndExecuteQuery(String params, int prefixLength, UUID uuid, AtomicReference<String> error) {
             Query query;
             if (params.length() > prefixLength) {
-                String[] args = params.substring(prefixLength).split(",");
-                query = Query.parse(Lists.newArrayList(args), error);
+                List<String> args = CollectionUtils.split(params.substring(prefixLength), ',');
+                query = Query.parse(args, error);
             } else {
                 query = Query.ALL;
             }
@@ -69,12 +65,12 @@ public class Placeholders extends AbstractPluginHolder {
                 return null;
             }
             PlaytimeDatabase db = plugin.getPlaytimeDatabase();
-            Long fromDb = query.collectPlaytimeWithCache(db, uuid);
-            if (fromDb == null) {
+            Long seconds = query.collectCurrentPlaytimeWithCache(db, uuid, null);
+            if (seconds == null) {
                 error.set("DATABASE_ERROR");
                 return null;
             }
-            return fromDb + db.getCurrentOnlineSeconds(uuid);
+            return seconds;
         }
 
         @Override
@@ -95,16 +91,17 @@ public class Placeholders extends AbstractPluginHolder {
                 return timeFormat.formatSeconds(totalSeconds);
             }
             if (params.startsWith("status_")) {
-                String[] split = params.substring(7).split(":", 2);
-                if (split.length == 2) {
-                    RewardSets rewardSets = RewardManager.inst().get(split[0]);
+                List<String> split = CollectionUtils.split(params.substring(7), ':', 2);
+                if (split.size() == 2) {
+                    RewardSets rewardSets = RewardManager.inst().get(split.get(0));
                     if (rewardSets == null) {
                         return "NOT_FOUND";
                     }
-                    if ("all".equalsIgnoreCase(split[1])) {
+                    String duration = split.get(1);
+                    if ("all".equalsIgnoreCase(duration)) {
                         return String.valueOf(rewardSets.checkClaimStatus(player, null));
                     }
-                    Long targetDuration = Query.parseSeconds(split[1]);
+                    Long targetDuration = Query.parseSeconds(duration);
                     if (targetDuration == null) {
                         return "WRONG_DURATION_FORMAT";
                     }

@@ -20,7 +20,10 @@ import top.mrxiaom.sweet.playtime.func.AbstractModule;
 import top.mrxiaom.sweet.playtime.func.CleanupManager;
 import top.mrxiaom.sweet.playtime.func.RewardManager;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 @AutoRegister
 public class CommandMain extends AbstractModule implements CommandExecutor, TabCompleter, Listener {

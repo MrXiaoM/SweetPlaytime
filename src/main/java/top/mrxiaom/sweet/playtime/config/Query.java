@@ -1,5 +1,6 @@
 package top.mrxiaom.sweet.playtime.config;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.utils.Util;
 import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
@@ -33,6 +34,13 @@ public class Query {
 
     public @Nullable LocalDate getEndDate() {
         return endDate;
+    }
+
+    @Contract("_,_,!null->!null")
+    public Long collectCurrentPlaytimeWithCache(PlaytimeDatabase db, UUID playerUUID, Long def) {
+        Long fromDb = collectPlaytimeWithCache(db, playerUUID);
+        if (fromDb == null) return def;
+        return fromDb + db.getCurrentOnlineSeconds(playerUUID);
     }
 
     /**

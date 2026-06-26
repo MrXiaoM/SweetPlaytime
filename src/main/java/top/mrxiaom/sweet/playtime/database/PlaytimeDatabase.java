@@ -35,21 +35,29 @@ public class PlaytimeDatabase extends AbstractPluginHolder implements IDatabase,
             players.put(player.getUniqueId(), new Playtime(player));
         }
         plugin.getScheduler().runTaskTimerAsync(() -> {
-            // 每天0点至少要保存一次在线时间数据
             LocalDate nowDate = LocalDate.now();
             if (isEqual(nowDate, lastDate)) return;
             lastDate = nowDate;
-
-            LocalDateTime now = nowDate.atTime(0, 0);
-            submit(players.values(), now);
-            // 提交后重设记录的开始时间
-            for (Playtime playtime : players.values()) {
-                playtime.setStartRecordTime(now);
-            }
+            triggerNextDay(lastDate, nowDate);
         }, 20L, 20L);
     }
     private boolean isEqual(LocalDate a, LocalDate b) {
         return a.getYear() == b.getYear() && a.getDayOfYear() == b.getDayOfYear();
+    }
+
+    /**
+     * 每天0点如果服务器开着，执行一次
+     * @param lastDate 昨天日期
+     * @param nowDate 当前日期
+     */
+    private void triggerNextDay(LocalDate lastDate, LocalDate nowDate) {
+        // 每天0点至少要保存一次在线时间数据
+        LocalDateTime now = nowDate.atTime(0, 0);
+        submit(players.values(), now);
+        // 提交后重设在线玩家记录的开始时间
+        for (Playtime playtime : players.values()) {
+            playtime.setStartRecordTime(now);
+        }
     }
 
     @EventHandler

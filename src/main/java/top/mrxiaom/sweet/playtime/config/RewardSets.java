@@ -87,7 +87,7 @@ public class RewardSets {
         }
         // 提交领取成功的记录到数据库
         if (!durationMap.isEmpty()) {
-            plugin.getRewardStatusDatabase().markClaimed(id, durationMap, outdateTime);
+            plugin.getRewardStatusDatabase().markClaimed(this, durationMap, outdateTime);
         }
     }
 
@@ -111,7 +111,7 @@ public class RewardSets {
         if (durationList != null && !durationList.isEmpty()) {
             plugin.getScheduler().runTaskAsync(() -> {
                 LocalDateTime outdateTime = statusOutdatePeriod.getNextOutdateDateTime();
-                plugin.getRewardStatusDatabase().markClaimed(player, id, durationList, outdateTime);
+                plugin.getRewardStatusDatabase().markClaimed(player, this, durationList, outdateTime);
             });
             return true;
         }
@@ -138,11 +138,10 @@ public class RewardSets {
         RewardStatusDatabase rdb = plugin.getRewardStatusDatabase();
         UUID uuid = player.getUniqueId();
         // 获取玩家当前在线时间
-        Long fromDb = createQuery().collectPlaytimeWithCache(pdb, uuid);
-        if (fromDb == null) return null;
-        long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
+        Long seconds = createQuery().collectCurrentPlaytimeWithCache(pdb, uuid, null);
+        if (seconds == null) return null;
         // 获取玩家已经领取过的奖励列表
-        List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
+        List<Long> claimed = rdb.getClaimedWithCache(uuid, this);
         if (claimed == null) return null;
         List<Long> durationList = new ArrayList<>();
         for (Reward reward : rewards) {
@@ -172,11 +171,10 @@ public class RewardSets {
         RewardStatusDatabase rdb = plugin.getRewardStatusDatabase();
         UUID uuid = player.getUniqueId();
         // 获取玩家当前在线时间
-        Long fromDb = createQuery().collectPlaytimeWithCache(pdb, uuid);
-        if (fromDb == null) return -1;
-        long seconds = fromDb + pdb.getCurrentOnlineSeconds(uuid);
+        Long seconds = createQuery().collectCurrentPlaytimeWithCache(pdb, uuid, null);
+        if (seconds == null) return -1;
         // 获取玩家已经领取过的奖励列表
-        List<Long> claimed = rdb.getClaimedWithCache(uuid, id);
+        List<Long> claimed = rdb.getClaimedWithCache(uuid, this);
         if (claimed == null) return -1;
 
         for (Reward reward : rewards) {

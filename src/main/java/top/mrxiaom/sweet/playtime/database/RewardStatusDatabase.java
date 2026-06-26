@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.mrxiaom.pluginbase.database.IDatabase;
 import top.mrxiaom.sweet.playtime.SweetPlaytime;
+import top.mrxiaom.sweet.playtime.config.RewardSets;
 import top.mrxiaom.sweet.playtime.func.AbstractPluginHolder;
 
 import java.sql.Connection;
@@ -67,36 +68,36 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
 
     /**
      * 获取已领取的累计时间列表
-     * @see RewardStatusDatabase#getClaimed(UUID, String)
+     * @see RewardStatusDatabase#getClaimed(UUID, RewardSets)
      */
-    public List<Long> getClaimedWithCache(UUID playerUUID, String rewardSetsId) {
-        List<Long> exists = getOrCreateCache(playerUUID).getCache(rewardSetsId);
+    public List<Long> getClaimedWithCache(UUID playerUUID, RewardSets rewardSets) {
+        List<Long> exists = getOrCreateCache(playerUUID).getCache(rewardSets.getId());
         if (exists != null) return exists;
-        return getClaimed(playerUUID, rewardSetsId);
+        return getClaimed(playerUUID, rewardSets);
     }
 
     /**
      * 获取已领取的累计时间列表
      * @param playerUUID 玩家 UUID
-     * @param rewardSetsId 奖励集合 ID，即奖励配置的文件名
+     * @param rewardSets 奖励集合，即奖励配置的文件名
      * @return 如果数据库调用失败，返回 <code>null</code>
      */
     @Nullable
-    public List<Long> getClaimed(UUID playerUUID, String rewardSetsId) {
+    public List<Long> getClaimed(UUID playerUUID, RewardSets rewardSets) {
         String now = LocalDateTime.now().format(timeFormat);
         try (Connection conn = plugin.getConnection();
             PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM `" + TABLE_NAME + "` WHERE `uuid`=? AND `reward_sets_id`=? AND `outdate_time` > '" + now + "';"
         )) {
             ps.setString(1, playerUUID.toString());
-            ps.setString(2, rewardSetsId);
+            ps.setString(2, rewardSets.getId());
             List<Long> durationList = new ArrayList<>();
             try (ResultSet result = ps.executeQuery()) {
                 while (result.next()) {
                     durationList.add(result.getLong("duration"));
                 }
             }
-            getOrCreateCache(playerUUID).putCache(rewardSetsId, durationList);
+            getOrCreateCache(playerUUID).putCache(rewardSets.getId(), durationList);
             return durationList;
         } catch (SQLException e) {
             warn(e);
@@ -105,18 +106,18 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
     }
 
     public void markClaimed(
-            String rewardSetsId,
+            RewardSets rewardSets,
             Map<Player, List<Long>> durationMap,
             LocalDateTime outdateTime
     ) {
         for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
             RewardStatusCacheCollection cache = getOrCreateCache(entry.getKey().getUniqueId());
-            List<Long> exists = cache.getCache(rewardSetsId);
+            List<Long> exists = cache.getCache(rewardSets.getId());
             if (exists != null) {
                 exists.addAll(entry.getValue());
-                cache.putCache(rewardSetsId, exists);
+                cache.putCache(rewardSets.getId(), exists);
             } else {
-                cache.putCache(rewardSetsId, entry.getValue());
+                cache.putCache(rewardSets.getId(), entry.getValue());
             }
         }
         plugin.getScheduler().runTaskAsync(() -> {
@@ -124,7 +125,7 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
             try (Connection conn = plugin.getConnection()) {
                 for (Map.Entry<Player, List<Long>> entry : durationMap.entrySet()) {
                     Player player = entry.getKey();
-                    db.markClaimed(conn, player, rewardSetsId, entry.getValue(), outdateTime);
+                    db.markClaimed(conn, player, rewardSets, entry.getValue(), outdateTime);
                 }
             } catch (SQLException e) {
                 db.warn(e);
@@ -134,12 +135,12 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
 
     public void markClaimed(
             Player player,
-            String rewardSetsId,
+            RewardSets rewardSets,
             List<Long> durationList,
             LocalDateTime outdateTime
     ) {
         try (Connection conn = plugin.getConnection()) {
-            markClaimed(conn, player, rewardSetsId, durationList, outdateTime);
+            markClaimed(conn, player, rewardSets, durationList, outdateTime);
         } catch (SQLException e) {
             warn(e);
         }
@@ -148,7 +149,7 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
     public void markClaimed(
             Connection conn,
             Player player,
-            String rewardSetsId,
+            RewardSets rewardSets,
             List<Long> durationList,
             LocalDateTime outdateTime
     ) throws SQLException {
@@ -164,12 +165,12 @@ public class RewardStatusDatabase extends AbstractPluginHolder implements IDatab
             for (long duration : durationList) {
                 ps.setString(1, uuid.toString());
                 ps.setString(2, name);
-                ps.setString(3, rewardSetsId);
+                ps.setString(3, rewardSets.getId());
                 ps.setLong(4, duration);
                 ps.addBatch();
             }
             ps.executeBatch();
-            getOrCreateCache(uuid).removeCache(rewardSetsId);
+            getOrCreateCache(uuid).removeCache(rewardSets.getId());
         }
     }
 

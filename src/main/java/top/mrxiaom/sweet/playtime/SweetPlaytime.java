@@ -1,20 +1,19 @@
 package top.mrxiaom.sweet.playtime;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import top.mrxiaom.pluginbase.BukkitPlugin;
 import top.mrxiaom.pluginbase.func.LanguageManager;
-import top.mrxiaom.pluginbase.utils.scheduler.FoliaLibScheduler;
+import top.mrxiaom.pluginbase.resolver.DefaultLibraryResolver;
 import top.mrxiaom.pluginbase.utils.ClassLoaderWrapper;
 import top.mrxiaom.pluginbase.utils.ConfigUtils;
-import top.mrxiaom.pluginbase.resolver.DefaultLibraryResolver;
-import org.bukkit.configuration.file.YamlConfiguration;
+import top.mrxiaom.pluginbase.utils.scheduler.FoliaLibScheduler;
+import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
+import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
 import java.io.File;
 import java.net.URL;
 import java.util.List;
-
-import top.mrxiaom.sweet.playtime.database.PlaytimeDatabase;
-import top.mrxiaom.sweet.playtime.database.RewardStatusDatabase;
 
 public class SweetPlaytime extends BukkitPlugin {
     public static SweetPlaytime getInstance() {
