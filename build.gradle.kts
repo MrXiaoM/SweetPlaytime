@@ -13,8 +13,9 @@ buildscript {
 }
 val base = LibraryHelper(project)
 
-group = "top.mrxiaom.sweet.playtime"
-version = "1.0.0"
+println("Group:   ${rootProject.group}")
+println("Version: ${rootProject.version}")
+
 val targetJavaVersion = 8
 val pluginBaseModules = base.modules.run { listOf(library, actions, l10n) }
 val shadowGroup = "top.mrxiaom.sweet.playtime.libs"
